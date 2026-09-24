@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta id="themeColor" name="theme-color" content="#f6f5f4">
   <meta name="darkreader-lock">
-  <title>SPLIT.v7</title>
+  <title>SPLIT.v8 Web Prototype</title>
+  <meta name="description" content="Crop landscape video to 9:16 and export named clips privately in your browser.">
   <style>
     :root {
       color-scheme: light;
@@ -374,14 +375,14 @@
 <body>
   <header class="site-header">
     <div class="header-inner">
-      <a class="brand" href="#editor" aria-label="SPLIT version 7">
+      <a class="brand" href="#editor" aria-label="SPLIT web version 8 prototype">
         <svg class="brand-mark" viewBox="0 0 70 56" aria-hidden="true">
           <path fill="currentColor" d="M1 13C1 6 6 1 13 1h14v54H13C6 55 1 50 1 43V13Z"/>
           <path fill="var(--color-accent)" d="M30 1h18v54H30z"/>
           <path fill="currentColor" d="M51 1h6c7 0 12 5 12 12v30c0 7-5 12-12 12h-6V1Z"/>
           <path fill="var(--color-canvas)" d="m35 18 10 10-10 10V18Z"/>
         </svg>
-        <span class="brand-name"><span>S<span class="brand-play-p">P</span>L/T</span><span class="brand-version">.v7</span></span>
+        <span class="brand-name"><span>S<span class="brand-play-p">P</span>L/T</span><span class="brand-version">.v8</span></span>
       </a>
       <nav class="header-actions" aria-label="App links">
         <a class="nav-link" href="https://github.com/prodbycjbeatsss" target="_blank" rel="noopener noreferrer">GitHub</a>
@@ -391,7 +392,7 @@
   </header>
 
   <main id="editor">
-    <h1 class="sr-only">SPLIT.v7 vertical video splitter</h1>
+    <h1 class="sr-only">SPLIT.v8 browser video splitter prototype</h1>
 
     <section class="card stack" aria-labelledby="editor-title">
       <h2 id="editor-title" hidden>Video editor</h2>
@@ -468,9 +469,9 @@
 
       <div id="result" class="result">
         <strong id="resultSummary"></strong>
-        <span>Saved to <code id="outputFolder"></code></span>
+        <span>Processing location: <code id="outputFolder"></code></span>
         <div class="actions">
-          <a id="downloadLink" class="button" href="#">Download batch ZIP</a>
+          <a id="downloadLink" class="button" href="#" download>Download batch ZIP</a>
           <button id="anotherButton" class="button secondary" type="button">Process another</button>
         </div>
       </div>
@@ -479,11 +480,12 @@
 
   <footer class="site-footer">
     <div class="footer-inner">
-      <p><span class="footer-brand">SPLIT.v7</span> · Local-first video tool</p>
-      <p>Your videos stay on your device · Powered by FFmpeg</p>
+      <p><span class="footer-brand">SPLIT.v8</span> · Browser-processing prototype</p>
+      <p>Your videos stay on your device · No upload or account</p>
     </div>
   </footer>
 
+  <script type="module" src="/src/deps.js"></script>
   <script>
     const themeToggle = document.querySelector('#themeToggle');
     const themeColor = document.querySelector('#themeColor');
@@ -543,11 +545,15 @@
 
     let selectedFile = null;
     let objectUrl = null;
-    let pollTimer = null;
     let videoDuration = 0;
     let expectedClipCount = 0;
     let clipNames = [];
     let clipNameEdited = [];
+    let ffmpegEngine = null;
+    let generatedClips = [];
+    let generatedZipUrl = null;
+    let activeClipIndex = 0;
+    let activeClipCount = 0;
     const SETTINGS_KEY = 'verticalSplitSettingsV4';
     const DEFAULT_SETTINGS = {
       startTime: '0:00',
@@ -819,6 +825,130 @@
       });
     }
 
+    function getBrowserDependencies() {
+      if (window.SPLIT_WEB_DEPS) return Promise.resolve(window.SPLIT_WEB_DEPS);
+      if (window.SPLIT_WEB_DEPS_ERROR) return Promise.reject(window.SPLIT_WEB_DEPS_ERROR);
+      return new Promise((resolve, reject) => {
+        const timeout = window.setTimeout(() => reject(new Error('The browser processing tools did not load. Check your connection and reload the page.')), 30000);
+        window.addEventListener('split-deps-ready', () => {
+          window.clearTimeout(timeout);
+          resolve(window.SPLIT_WEB_DEPS);
+        }, { once: true });
+        window.addEventListener('split-deps-error', () => {
+          window.clearTimeout(timeout);
+          reject(window.SPLIT_WEB_DEPS_ERROR || new Error('The browser processing tools could not load.'));
+        }, { once: true });
+      });
+    }
+
+    async function loadBrowserEngine() {
+      if (ffmpegEngine) return ffmpegEngine;
+      setProgress(1, 'Loading the private browser video engine…');
+      const { FFmpeg, toBlobURL } = await getBrowserDependencies();
+      const engine = new FFmpeg();
+      engine.on('progress', ({ progress: clipProgress }) => {
+        if (!activeClipCount) return;
+        const boundedProgress = Math.max(0, Math.min(1, Number(clipProgress) || 0));
+        const batchProgress = ((activeClipIndex + boundedProgress) / activeClipCount) * 94;
+        setProgress(batchProgress, `Cropping and exporting clip ${activeClipIndex + 1} of ${activeClipCount}…`);
+      });
+      const coreBaseUrl = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm';
+      await engine.load({
+        coreURL: await toBlobURL(`${coreBaseUrl}/ffmpeg-core.js`, 'text/javascript'),
+        wasmURL: await toBlobURL(`${coreBaseUrl}/ffmpeg-core.wasm`, 'application/wasm')
+      });
+      ffmpegEngine = engine;
+      return engine;
+    }
+
+    function releaseGeneratedFiles() {
+      generatedClips.forEach(clip => URL.revokeObjectURL(clip.url));
+      generatedClips = [];
+      if (generatedZipUrl) URL.revokeObjectURL(generatedZipUrl);
+      generatedZipUrl = null;
+      downloadLink.removeAttribute('href');
+    }
+
+    async function processInBrowser(plan, plannedNames) {
+      const { zipSync } = await getBrowserDependencies();
+      const engine = await loadBrowserEngine();
+      const inputDirectory = `/input-${Date.now()}`;
+      const inputPath = `${inputDirectory}/${selectedFile.name}`;
+      const targetWidth = plan.resolutionValue === 720 ? 720 : 1080;
+      const targetHeight = plan.resolutionValue === 720 ? 1280 : 1920;
+      const cropFraction = Number(crop.value) / 100;
+      const videoFilter = [
+        `scale=${targetWidth}:${targetHeight}:force_original_aspect_ratio=increase`,
+        `crop=${targetWidth}:${targetHeight}:(in_w-out_w)*${cropFraction.toFixed(6)}:(in_h-out_h)/2`,
+        'setsar=1'
+      ].join(',');
+
+      releaseGeneratedFiles();
+      activeClipCount = plan.count;
+      await engine.createDir(inputDirectory);
+      await engine.mount('WORKERFS', { files: [selectedFile] }, inputDirectory);
+
+      try {
+        for (let index = 0; index < plan.count; index += 1) {
+          activeClipIndex = index;
+          updateClipStatuses(index, index + 1);
+          setProgress((index / plan.count) * 94, `Cropping and exporting clip ${index + 1} of ${plan.count}…`);
+          const outputPath = `/split-output-${index + 1}.mp4`;
+          const clipStart = plan.startSeconds + index * plan.segmentValue;
+          const exitCode = await engine.exec([
+            '-ss', String(clipStart),
+            '-i', inputPath,
+            '-t', String(plan.segmentValue),
+            '-map', '0:v:0',
+            '-map', '0:a:0?',
+            '-vf', videoFilter,
+            '-c:v', 'libx264',
+            '-preset', 'ultrafast',
+            '-crf', '22',
+            '-pix_fmt', 'yuv420p',
+            '-c:a', 'aac',
+            '-b:a', '160k',
+            '-movflags', '+faststart',
+            '-y', outputPath
+          ]);
+          if (exitCode !== 0) throw new Error(`Clip ${index + 1} could not be exported.`);
+          const data = await engine.readFile(outputPath);
+          const blob = new Blob([data], { type: 'video/mp4' });
+          generatedClips.push({
+            name: plannedNames[index],
+            blob,
+            url: URL.createObjectURL(blob)
+          });
+          await engine.deleteFile(outputPath);
+          updateClipStatuses(index + 1, null);
+        }
+      } finally {
+        activeClipCount = 0;
+        try { await engine.unmount(inputDirectory); } catch (_) {}
+        try { await engine.deleteDir(inputDirectory); } catch (_) {}
+      }
+
+      setProgress(96, 'Packaging the clips into one tidy folder…');
+      const archiveFolder = `${safeMasterName()}-clips`;
+      const archiveEntries = {};
+      for (const clip of generatedClips) {
+        archiveEntries[`${archiveFolder}/${clip.name}`] = new Uint8Array(await clip.blob.arrayBuffer());
+      }
+      const zipBytes = zipSync(archiveEntries, { level: 0 });
+      generatedZipUrl = URL.createObjectURL(new Blob([zipBytes], { type: 'application/zip' }));
+      downloadLink.href = generatedZipUrl;
+      downloadLink.download = `${safeMasterName()}-clips.zip`;
+
+      setProgress(100, 'All clips are ready');
+      renderCompletedClips(generatedClips);
+      exportButton.disabled = false;
+      resultSummary.textContent = `${generatedClips.length} clips exported successfully.`;
+      outputFolder.textContent = 'This browser only — nothing was uploaded';
+      result.classList.add('visible');
+      message.classList.remove('error');
+      message.textContent = `Your clips are ready to view. The ZIP extracts into ${archiveFolder}.`;
+    }
+
     input.addEventListener('change', () => {
       selectedFile = input.files?.[0] ?? null;
       if (!selectedFile) return;
@@ -859,7 +989,7 @@
     });
     masterName.addEventListener('input', renderOverview);
 
-    exportButton.addEventListener('click', () => {
+    exportButton.addEventListener('click', async () => {
       if (!selectedFile) return showError('Choose a video first.');
       const plan = getPlan();
       if (plan.error) return showError(plan.error);
@@ -874,79 +1004,15 @@
       updateClipStatuses();
       result.classList.remove('visible');
       message.classList.remove('error');
-      message.textContent = 'Keep this page open while the video is processed.';
-      setProgress(0, 'Uploading to the local processor…');
-
-      const metadata = {
-        filename: selectedFile.name,
-        name: safeMasterName(),
-        segment: plan.segmentValue,
-        crop: crop.value,
-        limit: plan.clipLimitValue === null ? '' : plan.clipLimitValue,
-        start: plan.startSeconds,
-        resolution: plan.resolutionValue,
-        clipNames: plannedNames.names
-      };
-      const metadataBytes = new TextEncoder().encode(JSON.stringify(metadata));
-      const uploadBody = new Blob([metadataBytes, selectedFile], { type: 'application/octet-stream' });
-
-      const request = new XMLHttpRequest();
-      request.open('POST', '/api/jobs');
-      request.setRequestHeader('Content-Type', 'application/octet-stream');
-      request.setRequestHeader('X-Split-Metadata-Length', String(metadataBytes.byteLength));
-      request.upload.onprogress = event => {
-        if (event.lengthComputable) {
-          const uploadProgress = (event.loaded / event.total) * 100;
-          const uploadMessage = uploadProgress < 20
-            ? 'Reading your video…'
-            : uploadProgress < 85
-              ? 'Sending video to the local processor…'
-              : 'Almost ready to start exporting…';
-          setProgress(uploadProgress, uploadMessage);
-        }
-      };
-      request.onerror = () => showError('The local server could not receive the video.');
-      request.onload = () => {
-        if (request.status !== 202) return showError(request.responseText || 'Processing could not start.');
-        const job = JSON.parse(request.responseText);
-        setProgress(0, 'Preparing the full-screen 9:16 crop…');
-        pollJob(job.jobId);
-      };
-      request.send(uploadBody);
-    });
-
-    async function pollJob(jobId) {
-      clearTimeout(pollTimer);
+      message.textContent = 'Keep this page open and your screen awake while the phone processes the video.';
+      setProgress(0, 'Preparing private browser processing…');
       try {
-        const response = await fetch(`/api/jobs/${jobId}`);
-        if (!response.ok) throw new Error('Job status unavailable.');
-        const job = await response.json();
-
-        if (job.status === 'failed') return showError(job.error || 'FFmpeg could not process this video.');
-        if (job.status === 'complete') {
-          setProgress(100, 'All clips are ready');
-          renderCompletedClips(job.clips || []);
-          exportButton.disabled = false;
-          resultSummary.textContent = `${job.clipCount} clips exported successfully.`;
-          outputFolder.textContent = job.outputFolder;
-          downloadLink.href = `/api/jobs/${jobId}/download`;
-          result.classList.add('visible');
-          message.textContent = `Your clips are ready to view. The ZIP extracts into ${job.archiveFolder || 'one tidy folder'}.`;
-          return;
-        }
-
-        updateClipStatuses(job.completedClips || 0, job.currentClip || null);
-        const processingMessage = job.status === 'zipping'
-          ? 'Packaging all clips for batch download…'
-          : job.currentClip
-            ? `Cropping and exporting clip ${job.currentClip} of ${job.expectedClips || expectedClipCount}…`
-            : 'Preparing the full-screen 9:16 crop…';
-        setProgress(job.progress || 0, processingMessage);
-        pollTimer = setTimeout(() => pollJob(jobId), 750);
+        await processInBrowser(plan, plannedNames.names);
       } catch (error) {
-        showError(error.message);
+        activeClipCount = 0;
+        showError(error instanceof Error ? error.message : 'Browser processing stopped unexpectedly.');
       }
-    }
+    });
 
     anotherButton.addEventListener('click', () => {
       result.classList.remove('visible');
@@ -957,6 +1023,7 @@
       expectedClipCount = 0;
       clipNames = [];
       clipNameEdited = [];
+      releaseGeneratedFiles();
       masterName.value = '';
       clipList.replaceChildren();
       clipOverview.classList.remove('visible');

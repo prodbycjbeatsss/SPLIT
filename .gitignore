@@ -1,4 +1,8 @@
+node_modules/
+dist/
+.vercel/
 .work/
 outputs/
 __pycache__/
 *.pyc
+*.zip

@@ -1,62 +1,70 @@
-# SPLIT.v7
+# SPLIT.v8 Web Prototype
 
-A local, mobile-friendly interface for turning one landscape video into separate full-screen 9:16 clips. Processing happens on your Android device through Termux and FFmpeg.
+Browser-only experiment for turning one landscape video into named, full-screen 9:16 clips. The source video remains on the device and is processed with FFmpeg WebAssembly; there is no upload, account or application server.
 
-The v7 interface adds the compact play-panel logo, the `SPL/T.v7` wordmark and a paper-and-terracotta colour system. It retains saved light and dark modes, a GitHub link and a minimal local-first footer.
+SPLIT.v7 remains the stable Termux/Python release on the `main` branch and `v7.0.0` tag. Develop this edition only on `web-v8` until its Android stress test passes.
 
-## What it does
+## Prototype scope
 
-- Previews the video inside a 9:16 canvas.
-- Scales proportionally until the complete canvas is filled.
-- Crops the overflowing sides without stretching or adding borders.
-- Lets you move the crop horizontally to keep the important subject visible.
-- Starts at `0:00`, exports six 15-second clips and renders at 1080p by default.
-- Lets you choose a start time, clip length, number of clips and either 1080p or 720p output.
-- Remembers the start time, resolution, clip count, segment length and crop position on the device.
-- Always retains the source audio when an audio track is present.
-- Lets you set one master name, then rename every planned clip independently before export.
-- Shows a pre-export overview containing each editable filename, source timestamp range and live status.
-- Shows batch progress with changing messages while the video uploads, crops, exports and packages.
-- Lets you play every completed clip inside the app.
-- Saves every clip to `Download/VerticalSplit` and creates a ZIP whose contents sit inside a tidy `master-name-clips` folder.
+- Preview the source inside a movable 9:16 crop.
+- Default to six 15-second clips from `0:00` at 1080p.
+- Preserve source audio when present.
+- Rename every clip before export.
+- Process clips sequentially in the browser.
+- View finished clips without uploading them.
+- Download one ZIP containing a `master-name-clips` folder.
+- Preserve the v7 paper-and-terracotta interface and saved light/dark setting.
 
-## One-time Termux setup
+## Known limitations
 
-```bash
-termux-setup-storage
-pkg update
-pkg install python ffmpeg
-```
+- The FFmpeg browser engine is downloaded on the first export and is roughly 31 MB before browser caching.
+- Browser processing is slower than native Termux FFmpeg.
+- Keep the page open and the screen awake while exporting.
+- Large-file reliability must be proven on the target Android phone before this branch can replace v7.
+- Generated clips are temporary until the ZIP is downloaded.
 
-When Android asks, allow Termux to access your files.
+## Run for development
 
-## Start the interface
-
-Move the `vertical-split-gui` folder somewhere Termux can access, then run:
+Node.js 20.19 or newer is recommended for the current Vite toolchain.
 
 ```bash
-cd /path/to/vertical-split-gui
-bash start.sh
+npm install
+npm run dev
 ```
 
-Open this address in your Android browser if it does not open automatically:
+Open the network URL shown by Vite on the Android device.
+
+## Build
+
+```bash
+npm run build
+npm run preview
+```
+
+The production output is created in `dist/`.
+
+## Deploy to Vercel
+
+Import the GitHub repository into Vercel and select the `web-v8` branch. Vercel should detect Vite and use:
 
 ```text
-http://127.0.0.1:8765
+Build command: npm run build
+Output directory: dist
 ```
 
-Keep Termux running while a video is being processed. Press `Ctrl+C` in Termux when you want to stop the local server.
+No environment variables or server functions are required for the prototype.
 
-## Output
+## Required physical-device test
 
-Each job creates a new folder so existing clips are never overwritten:
+Before merging, test one 250–300 MB landscape video using:
 
-```text
-Download/VerticalSplit/video_vertical_clips_DATE_TIME_ID/
-```
+- six clips;
+- 15 seconds each;
+- 1080p;
+- retained audio;
+- non-centred crop position;
+- individually edited filenames;
+- in-app playback;
+- final ZIP extraction.
 
-The folder contains the separate MP4 clips and a ZIP file containing the same batch. When the ZIP is extracted, it creates one `master-name-clips` folder rather than placing loose videos directly in Downloads. This keeps file browsing tidier; gallery apps may still group media according to their own rules.
-
-## Important crop behaviour
-
-Filling a 9:16 canvas with a 16:9 video removes a large amount from the left and right sides. Use the horizontal crop slider to position the subject before exporting.
+See `docs/ARCHITECTURE.md` for the decision record and promotion criteria.

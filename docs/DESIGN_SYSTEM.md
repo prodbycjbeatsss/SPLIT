@@ -8,7 +8,7 @@ SPLIT uses a warm paper notebook aesthetic adapted to a compact Android utility.
 
 ### App header
 
-The sticky 64px header uses the compact play-panel mark with the `SPL/T.v7` wordmark on the left. GitHub and the saved theme toggle sit on the right. There is no marketing hero or tagline, keeping the export controls above the fold.
+The sticky 64px header uses the compact play-panel mark with the `SPL/T.v8` wordmark on the left. GitHub and the saved theme toggle sit on the right. There is no marketing hero or tagline, keeping the export controls above the fold.
 
 ### File picker
 
@@ -24,7 +24,7 @@ Each view has one filled terracotta action: Batch export. Disabled state uses op
 
 ### Secondary action
 
-Process another and View use the pale terracotta ghost treatment. They never compete with the current primary action.
+Process another and View use the pale terracotta ghost treatment. They never compete with the current primary action. Browser-engine loading, encoding and packaging remain progress states rather than separate screens.
 
 ### Clip overview
 
@@ -52,3 +52,4 @@ The preview is the one dark-mode island. Midnight framing focuses attention on t
 - `prefers-reduced-motion` is respected.
 - UI fonts use local system fallbacks so the app remains fully offline.
 - The app owns its light/dark theme and opts out of extension-driven recolouring.
+- Processing status explicitly tells mobile users to keep the page open and the screen awake.
