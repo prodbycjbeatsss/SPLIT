@@ -1,0 +1,973 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta id="themeColor" name="theme-color" content="#f6f5f4">
+  <meta name="darkreader-lock">
+  <title>SPLIT.v7</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --color-canvas: #f6f5f4;
+      --color-surface: #ffffff;
+      --color-ink: #000000;
+      --color-graphite: #615d59;
+      --color-stone: #757575;
+      --color-border: rgba(0, 0, 0, .08);
+      --color-border-strong: rgba(0, 0, 0, .18);
+      --color-primary: #b84a32;
+      --color-primary-hover: #9f3d29;
+      --color-accent: #cf6041;
+      --color-sky-tint: #f7e5dd;
+      --color-marigold: #d97845;
+      --color-peach: #f3d7c8;
+      --color-midnight: #02093a;
+      --color-danger: #b42318;
+      --color-field: #ffffff;
+      --color-label: rgba(0, 0, 0, .68);
+      --color-subtle-text: rgba(0, 0, 0, .52);
+      --color-focus-ring: rgba(184, 74, 50, .22);
+      --color-picker-hover: #f2d6ca;
+      --color-neutral-pill: rgba(0, 0, 0, .06);
+      --color-neutral-pill-text: rgba(0, 0, 0, .55);
+      --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-editorial: "Source Serif Pro", Georgia, serif;
+      --radius-card: 12px;
+      --radius-button: 8px;
+      --radius-small: 4px;
+      --transition: 200ms ease;
+    }
+
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --color-canvas: #191918;
+      --color-surface: #242423;
+      --color-ink: #f7f6f3;
+      --color-graphite: #c9c5bf;
+      --color-stone: #a5a19b;
+      --color-border: rgba(255, 255, 255, .10);
+      --color-border-strong: rgba(255, 255, 255, .20);
+      --color-primary: #c95b3d;
+      --color-primary-hover: #dc6b4b;
+      --color-accent: #e07958;
+      --color-sky-tint: #3a2822;
+      --color-danger: #ff8c82;
+      --color-field: #1e1e1d;
+      --color-label: rgba(255, 255, 255, .72);
+      --color-subtle-text: rgba(255, 255, 255, .55);
+      --color-focus-ring: rgba(224, 121, 88, .28);
+      --color-picker-hover: #493129;
+      --color-neutral-pill: rgba(255, 255, 255, .09);
+      --color-neutral-pill-text: rgba(255, 255, 255, .66);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--color-canvas);
+      color: var(--color-ink);
+      font: 400 16px/1.5 var(--font-sans);
+      transition: background var(--transition), color var(--transition);
+    }
+
+    main {
+      width: min(100%, 800px);
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+    }
+
+    .site-header {
+      position: sticky;
+      z-index: 10;
+      top: 0;
+      border-bottom: 1px solid var(--color-border);
+      background: var(--color-canvas);
+      transition: background var(--transition), border-color var(--transition);
+    }
+    .header-inner {
+      display: flex;
+      width: min(100%, 800px);
+      min-height: 64px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin: 0 auto;
+      padding: 8px 16px;
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      color: var(--color-ink);
+      font-size: 25px;
+      font-weight: 750;
+      letter-spacing: -.045em;
+      line-height: 1;
+      text-decoration: none;
+    }
+    .brand-mark { width: 35px; height: 28px; flex: 0 0 auto; }
+    .brand-name { display: inline-flex; align-items: baseline; }
+    .brand-play-p { position: relative; display: inline-block; }
+    .brand-play-p::after {
+      position: absolute;
+      top: 31%;
+      left: 38%;
+      width: 7px;
+      height: 7px;
+      background: var(--color-canvas);
+      clip-path: polygon(0 0, 100% 50%, 0 100%);
+      content: "";
+      pointer-events: none;
+    }
+    .brand-version {
+      margin-left: 3px;
+      color: var(--color-primary);
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -.02em;
+    }
+    .header-actions { display: flex; align-items: center; gap: 6px; }
+    .nav-link, .icon-button {
+      display: inline-flex;
+      min-height: 44px;
+      align-items: center;
+      justify-content: center;
+      border: 0;
+      border-radius: var(--radius-button);
+      background: transparent;
+      color: var(--color-subtle-text);
+      font: 600 14px/1 var(--font-sans);
+      text-decoration: none;
+      transition: background var(--transition), color var(--transition);
+    }
+    .nav-link { padding: 0 12px; }
+    .icon-button { width: 44px; padding: 0; font-size: 20px; }
+    .nav-link:hover, .icon-button:hover { background: var(--color-neutral-pill); color: var(--color-ink); }
+    .nav-link:focus-visible, .icon-button:focus-visible, .brand:focus-visible {
+      outline: 3px solid var(--color-focus-ring);
+      outline-offset: 2px;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .card {
+      padding: 20px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-card);
+      background: var(--color-surface);
+    }
+    .stack { display: grid; gap: 20px; }
+    .controls { display: grid; gap: 16px; }
+    .section-heading { display: grid; gap: 4px; margin-bottom: -4px; }
+    .section-heading h3 { margin: 0; font-size: 20px; line-height: 1.2; letter-spacing: -.011em; }
+    .section-heading p { margin: 0; color: var(--color-stone); font-size: 14px; }
+
+    .picker {
+      display: grid;
+      min-height: 108px;
+      place-items: center;
+      padding: 20px;
+      border: 1px dashed rgba(184, 74, 50, .5);
+      border-radius: var(--radius-card);
+      background: var(--color-sky-tint);
+      color: var(--color-primary);
+      text-align: center;
+      cursor: pointer;
+      transition: background var(--transition), border-color var(--transition);
+    }
+    .picker:hover { border-color: var(--color-primary); background: var(--color-picker-hover); }
+    .picker-copy { display: grid; gap: 4px; }
+    .picker strong { color: var(--color-ink); font-size: 16px; }
+    .picker-note { color: var(--color-graphite); font-size: 13px; }
+    input[type="file"] { position: absolute; width: 1px; height: 1px; opacity: 0; }
+    .picker:has(+ input[type="file"]:focus-visible) {
+      outline: 3px solid var(--color-focus-ring);
+      outline-offset: 2px;
+    }
+
+    .preview-shell {
+      display: none;
+      justify-content: center;
+      overflow: hidden;
+      padding: 24px;
+      border-radius: var(--radius-card);
+      background: var(--color-midnight);
+    }
+    .preview-shell.visible { display: flex; }
+    .preview {
+      width: min(58vw, 270px);
+      aspect-ratio: 9 / 16;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, .35);
+      border-radius: var(--radius-card);
+      background: #000;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, .25);
+    }
+    video { width: 100%; height: 100%; object-fit: cover; object-position: 50% center; background: #000; }
+
+    label { display: grid; gap: 8px; color: var(--color-label); font-size: 14px; font-weight: 500; }
+    .controls label > span { display: flex; justify-content: space-between; gap: 12px; }
+    output { color: var(--color-ink); font-variant-numeric: tabular-nums; }
+    input[type="range"] { width: 100%; min-height: 28px; accent-color: var(--color-primary); }
+    input[type="number"], input[type="text"], select {
+      width: 100%;
+      min-height: 48px;
+      padding: 0 14px;
+      border: 1px solid var(--color-border-strong);
+      border-radius: var(--radius-button);
+      outline: 0;
+      background: var(--color-field);
+      color: var(--color-ink);
+      font: 500 16px/1 var(--font-sans);
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    input[type="number"]:focus, input[type="text"]:focus, select:focus {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px var(--color-focus-ring);
+    }
+
+    button, .button {
+      display: inline-flex;
+      min-height: 48px;
+      align-items: center;
+      justify-content: center;
+      padding: 0 18px;
+      border: 0;
+      border-radius: var(--radius-button);
+      background: var(--color-primary);
+      color: #fff;
+      font: 600 15px/1 var(--font-sans);
+      text-decoration: none;
+      cursor: pointer;
+      transition: background var(--transition), transform var(--transition), opacity var(--transition);
+    }
+    button:hover, .button:hover { background: var(--color-primary-hover); }
+    button:active, .button:active { transform: translateY(1px); }
+    button:focus-visible, .button:focus-visible, .picker:focus-visible {
+      outline: 3px solid var(--color-focus-ring);
+      outline-offset: 2px;
+    }
+    button:disabled { cursor: not-allowed; opacity: .4; transform: none; }
+    .button.secondary {
+      border: 0;
+      background: var(--color-sky-tint);
+      color: var(--color-primary);
+    }
+    .button.secondary:hover { background: var(--color-picker-hover); }
+    .actions { display: grid; gap: 8px; }
+
+    .message { min-height: 24px; margin: 0; color: var(--color-stone); font-size: 14px; }
+    .message.error { color: var(--color-danger); font-weight: 600; }
+    .status { display: none; gap: 10px; padding: 16px; border-radius: var(--radius-card); background: var(--color-sky-tint); }
+    .status.visible { display: grid; }
+    .status-line { display: flex; justify-content: space-between; gap: 12px; color: var(--color-graphite); font-size: 14px; font-weight: 500; }
+    progress { width: 100%; height: 10px; accent-color: var(--color-primary); }
+    .result { display: none; gap: 12px; padding: 16px; border-radius: var(--radius-card); background: var(--color-sky-tint); }
+    .result.visible { display: grid; }
+    code { overflow-wrap: anywhere; color: var(--color-primary); font-size: 13px; }
+
+    .overview {
+      display: none;
+      gap: 12px;
+      padding: 16px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-card);
+      background: var(--color-surface);
+    }
+    .overview.visible { display: grid; }
+    .overview-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+    .overview-heading h3 { margin: 0; font-size: 20px; line-height: 1.2; letter-spacing: -.011em; }
+    .overview-heading span { color: var(--color-stone); font-size: 12px; font-weight: 600; }
+    .clip-list { display: grid; max-height: 430px; gap: 8px; margin: 0; padding: 0; overflow: auto; list-style: none; }
+    .clip-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 6px 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-button);
+      background: var(--color-surface);
+    }
+    .clip-name-input {
+      min-height: 38px !important;
+      padding: 0 10px !important;
+      font-size: 14px !important;
+      font-weight: 600 !important;
+    }
+    .clip-name { overflow: hidden; align-self: center; color: var(--color-ink); font-size: 14px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+    .clip-time { color: var(--color-stone); font-size: 12px; font-variant-numeric: tabular-nums; }
+    .clip-status {
+      grid-column: 2;
+      grid-row: 1 / span 2;
+      align-self: center;
+      padding: 3px 9px;
+      border-radius: 9999px;
+      background: var(--color-neutral-pill);
+      color: var(--color-neutral-pill-text);
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .clip-status.exporting { background: #fff0cf; color: #7a4b00; }
+    .clip-status.ready { background: var(--color-sky-tint); color: var(--color-primary); }
+    .clip-view-button {
+      grid-column: 2;
+      min-height: 36px;
+      padding: 0 12px;
+      background: var(--color-sky-tint);
+      color: var(--color-primary);
+      font-size: 12px;
+    }
+    .clip-view-button:hover { background: var(--color-picker-hover); }
+    .clip-player {
+      grid-column: 1 / -1;
+      width: min(100%, 270px);
+      aspect-ratio: 9 / 16;
+      justify-self: center;
+      margin-top: 6px;
+      border-radius: var(--radius-button);
+      background: #000;
+    }
+
+    .site-footer {
+      border-top: 1px solid var(--color-border);
+      color: var(--color-stone);
+      font-size: 12px;
+    }
+    .footer-inner {
+      display: flex;
+      width: min(100%, 800px);
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 8px 16px;
+      margin: 0 auto;
+      padding: 20px 16px 28px;
+    }
+    .footer-inner p { margin: 0; }
+    .footer-brand { color: var(--color-ink); font-weight: 700; }
+
+    @media (min-width: 620px) {
+      .header-inner { padding-inline: 24px; }
+      main { padding: 32px 24px 64px; }
+      .card { padding: 24px; }
+      .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; }
+      .crop-control { grid-column: 1 / -1; }
+      .actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="#editor" aria-label="SPLIT version 7">
+        <svg class="brand-mark" viewBox="0 0 70 56" aria-hidden="true">
+          <path fill="currentColor" d="M1 13C1 6 6 1 13 1h14v54H13C6 55 1 50 1 43V13Z"/>
+          <path fill="var(--color-accent)" d="M30 1h18v54H30z"/>
+          <path fill="currentColor" d="M51 1h6c7 0 12 5 12 12v30c0 7-5 12-12 12h-6V1Z"/>
+          <path fill="var(--color-canvas)" d="m35 18 10 10-10 10V18Z"/>
+        </svg>
+        <span class="brand-name"><span>S<span class="brand-play-p">P</span>L/T</span><span class="brand-version">.v7</span></span>
+      </a>
+      <nav class="header-actions" aria-label="App links">
+        <a class="nav-link" href="https://github.com/prodbycjbeatsss" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <button id="themeToggle" class="icon-button" type="button" aria-label="Enable dark mode" title="Enable dark mode">☾</button>
+      </nav>
+    </div>
+  </header>
+
+  <main id="editor">
+    <h1 class="sr-only">SPLIT.v7 vertical video splitter</h1>
+
+    <section class="card stack" aria-labelledby="editor-title">
+      <h2 id="editor-title" hidden>Video editor</h2>
+
+      <label class="picker" for="videoInput">
+        <span class="picker-copy"><strong>Choose a video</strong><span class="picker-note">MP4, MOV, MKV or another FFmpeg-supported format</span></span>
+      </label>
+      <input id="videoInput" type="file" accept="video/*">
+
+      <div id="previewShell" class="preview-shell">
+        <div class="preview">
+          <video id="preview" controls playsinline muted></video>
+        </div>
+      </div>
+
+      <label>
+        Master clip name
+        <input id="masterName" type="text" maxlength="80" placeholder="e.g. Kings-and-Queens" autocomplete="off">
+      </label>
+
+      <div class="section-heading">
+        <h3>Export settings</h3>
+        <p>Choose where the batch starts and how each clip is created.</p>
+      </div>
+
+      <div class="controls">
+        <label class="crop-control">
+          <span>Horizontal crop position <output id="cropValue">50%</output></span>
+          <input id="cropPosition" type="range" min="0" max="100" value="50" step="1">
+        </label>
+
+        <label>
+          Start time
+          <input id="startTime" type="text" value="0:00" inputmode="decimal" placeholder="0:00" autocomplete="off">
+        </label>
+
+        <label>
+          Segment length
+          <input id="segmentLength" type="number" min="1" max="600" step="1" value="15" inputmode="decimal">
+        </label>
+
+        <label>
+          Number of clips
+          <input id="clipLimit" type="number" min="1" max="1000" step="1" value="6" inputmode="numeric">
+        </label>
+
+        <label>
+          Resolution
+          <select id="resolution">
+            <option value="1080" selected>1080p</option>
+            <option value="720">720p</option>
+          </select>
+        </label>
+      </div>
+
+      <section id="clipOverview" class="overview" aria-labelledby="overviewTitle">
+        <div class="overview-heading">
+          <h3 id="overviewTitle">Export overview</h3>
+          <span id="overviewCount"></span>
+        </div>
+        <ol id="clipList" class="clip-list"></ol>
+      </section>
+
+      <p class="message" id="message" role="status">Choose a video to begin.</p>
+      <button id="exportButton" type="button" disabled>Batch export</button>
+
+      <div id="status" class="status" aria-live="polite">
+        <div class="status-line">
+          <span id="statusLabel">Preparing…</span>
+          <span id="statusPercent">0%</span>
+        </div>
+        <progress id="progress" max="100" value="0">0%</progress>
+      </div>
+
+      <div id="result" class="result">
+        <strong id="resultSummary"></strong>
+        <span>Saved to <code id="outputFolder"></code></span>
+        <div class="actions">
+          <a id="downloadLink" class="button" href="#">Download batch ZIP</a>
+          <button id="anotherButton" class="button secondary" type="button">Process another</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <p><span class="footer-brand">SPLIT.v7</span> · Local-first video tool</p>
+      <p>Your videos stay on your device · Powered by FFmpeg</p>
+    </div>
+  </footer>
+
+  <script>
+    const themeToggle = document.querySelector('#themeToggle');
+    const themeColor = document.querySelector('#themeColor');
+    const THEME_KEY = 'verticalSplitTheme';
+
+    function applyTheme(theme) {
+      const selectedTheme = theme === 'dark' ? 'dark' : 'light';
+      document.documentElement.dataset.theme = selectedTheme;
+      themeColor.content = selectedTheme === 'dark' ? '#191918' : '#f6f5f4';
+      const nextThemeName = selectedTheme === 'dark' ? 'light' : 'dark';
+      themeToggle.textContent = selectedTheme === 'dark' ? '☀' : '☾';
+      themeToggle.setAttribute('aria-label', `Enable ${nextThemeName} mode`);
+      themeToggle.title = `Enable ${nextThemeName} mode`;
+    }
+
+    let savedTheme = 'light';
+    try {
+      savedTheme = localStorage.getItem(THEME_KEY) || 'light';
+    } catch (_) {
+      savedTheme = 'light';
+    }
+    applyTheme(savedTheme);
+    themeToggle.addEventListener('click', () => {
+      const nextTheme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+      try {
+        localStorage.setItem(THEME_KEY, nextTheme);
+      } catch (_) {
+        // The theme still changes for this session when browser storage is unavailable.
+      }
+      applyTheme(nextTheme);
+    });
+
+    const input = document.querySelector('#videoInput');
+    const preview = document.querySelector('#preview');
+    const previewShell = document.querySelector('#previewShell');
+    const crop = document.querySelector('#cropPosition');
+    const cropValue = document.querySelector('#cropValue');
+    const startTime = document.querySelector('#startTime');
+    const segment = document.querySelector('#segmentLength');
+    const clipLimit = document.querySelector('#clipLimit');
+    const resolution = document.querySelector('#resolution');
+    const masterName = document.querySelector('#masterName');
+    const clipOverview = document.querySelector('#clipOverview');
+    const clipList = document.querySelector('#clipList');
+    const overviewCount = document.querySelector('#overviewCount');
+    const exportButton = document.querySelector('#exportButton');
+    const message = document.querySelector('#message');
+    const status = document.querySelector('#status');
+    const statusLabel = document.querySelector('#statusLabel');
+    const statusPercent = document.querySelector('#statusPercent');
+    const progress = document.querySelector('#progress');
+    const result = document.querySelector('#result');
+    const resultSummary = document.querySelector('#resultSummary');
+    const outputFolder = document.querySelector('#outputFolder');
+    const downloadLink = document.querySelector('#downloadLink');
+    const anotherButton = document.querySelector('#anotherButton');
+
+    let selectedFile = null;
+    let objectUrl = null;
+    let pollTimer = null;
+    let videoDuration = 0;
+    let expectedClipCount = 0;
+    let clipNames = [];
+    let clipNameEdited = [];
+    const SETTINGS_KEY = 'verticalSplitSettingsV4';
+    const DEFAULT_SETTINGS = {
+      startTime: '0:00',
+      resolution: '1080',
+      clipLimit: '6',
+      segment: '15',
+      crop: '50'
+    };
+
+    function loadSettings() {
+      let saved = {};
+      try {
+        saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+      } catch (_) {
+        saved = {};
+      }
+      const settings = { ...DEFAULT_SETTINGS, ...saved };
+      startTime.value = settings.startTime;
+      resolution.value = ['720', '1080'].includes(String(settings.resolution)) ? String(settings.resolution) : '1080';
+      clipLimit.value = settings.clipLimit;
+      segment.value = settings.segment;
+      crop.value = settings.crop;
+      cropValue.value = `${crop.value}%`;
+      preview.style.objectPosition = `${crop.value}% center`;
+    }
+
+    function saveSettings() {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify({
+        startTime: startTime.value,
+        resolution: resolution.value,
+        clipLimit: clipLimit.value,
+        segment: segment.value,
+        crop: crop.value
+      }));
+    }
+
+    function safeMasterName() {
+      return masterName.value
+        .trim()
+        .replace(/[^a-zA-Z0-9._-]+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^[._-]+|[._-]+$/g, '') || 'clip';
+    }
+
+    function safeClipFilename(value) {
+      const withoutExtension = String(value).trim().replace(/\.mp4$/i, '');
+      const cleaned = withoutExtension
+        .replace(/[^a-zA-Z0-9._-]+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^[._-]+|[._-]+$/g, '');
+      return cleaned ? `${cleaned}.mp4` : '';
+    }
+
+    function currentClipNames() {
+      const names = [...clipList.querySelectorAll('.clip-name-input')].map(input => safeClipFilename(input.value));
+      if (names.some(name => !name)) return { error: 'Every clip needs a name.' };
+      const comparable = names.map(name => name.toLocaleLowerCase());
+      if (new Set(comparable).size !== comparable.length) return { error: 'Every clip name must be unique.' };
+      return { names };
+    }
+
+    function formatTime(totalSeconds) {
+      const rounded = Math.max(0, Math.floor(totalSeconds));
+      const hours = Math.floor(rounded / 3600);
+      const minutes = Math.floor((rounded % 3600) / 60);
+      const seconds = rounded % 60;
+      return hours > 0
+        ? `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+        : `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+
+    function parseTime(value) {
+      const parts = value.trim().split(':');
+      if (parts.length < 1 || parts.length > 3 || parts.some(part => part === '' || !/^\d+(?:\.\d+)?$/.test(part))) {
+        return NaN;
+      }
+      const numbers = parts.map(Number);
+      if (parts.length > 1 && numbers.slice(1).some(number => number >= 60)) return NaN;
+      if (parts.length === 1) return numbers[0];
+      if (parts.length === 2) return numbers[0] * 60 + numbers[1];
+      return numbers[0] * 3600 + numbers[1] * 60 + numbers[2];
+    }
+
+    function getPlan() {
+      const segmentValue = Number(segment.value);
+      const clipLimitValue = clipLimit.value.trim() === '' ? null : Number(clipLimit.value);
+      const startSeconds = parseTime(startTime.value);
+      const resolutionValue = Number(resolution.value);
+      if (!Number.isFinite(startSeconds) || startSeconds < 0) {
+        return { error: 'Start time must use seconds, M:SS or H:MM:SS.' };
+      }
+      if (!Number.isFinite(segmentValue) || segmentValue <= 0 || segmentValue > 600) {
+        return { error: 'Segment length must be between 1 and 600 seconds.' };
+      }
+      if (clipLimitValue !== null && (!Number.isInteger(clipLimitValue) || clipLimitValue < 1 || clipLimitValue > 1000)) {
+        return { error: 'Number of clips must be a whole number between 1 and 1000, or left empty for all clips.' };
+      }
+      if (!videoDuration) return { error: 'The video duration is not available yet.' };
+      if (startSeconds >= videoDuration) return { error: 'Start time must be before the end of the video.' };
+
+      const availableDuration = videoDuration - startSeconds;
+      const fullClips = Math.floor((availableDuration + 0.1) / segmentValue);
+      if (clipLimitValue !== null && clipLimitValue > fullClips) {
+        return { error: `This video can provide ${fullClips} full ${segmentValue}-second clips.` };
+      }
+
+      const count = clipLimitValue ?? Math.ceil(availableDuration / segmentValue);
+      if (count > 1000) return { error: 'This setup would create more than 1000 clips. Increase the segment length.' };
+      return { segmentValue, clipLimitValue, count, startSeconds, resolutionValue };
+    }
+
+    function renderOverview() {
+      if (!selectedFile || !videoDuration) {
+        clipOverview.classList.remove('visible');
+        return;
+      }
+
+      const plan = getPlan();
+      if (plan.error) {
+        clipOverview.classList.remove('visible');
+        message.textContent = plan.error;
+        message.classList.add('error');
+        exportButton.disabled = true;
+        return;
+      }
+
+      expectedClipCount = plan.count;
+      const filename = safeMasterName();
+      clipNames = Array.from({ length: plan.count }, (_, index) => (
+        clipNameEdited[index] && clipNames[index]
+          ? clipNames[index]
+          : `${index + 1}-${filename}.mp4`
+      ));
+      clipNameEdited = Array.from({ length: plan.count }, (_, index) => Boolean(clipNameEdited[index]));
+      clipList.replaceChildren();
+
+      for (let index = 0; index < plan.count; index += 1) {
+        const item = document.createElement('li');
+        item.className = 'clip-row';
+
+        const name = document.createElement('input');
+        name.className = 'clip-name-input';
+        name.type = 'text';
+        name.maxLength = 100;
+        name.value = clipNames[index];
+        name.setAttribute('aria-label', `Name for clip ${index + 1}`);
+        name.addEventListener('input', () => {
+          clipNames[index] = name.value;
+          clipNameEdited[index] = true;
+          message.classList.remove('error');
+        });
+        name.addEventListener('blur', () => {
+          const cleaned = safeClipFilename(name.value);
+          if (cleaned) {
+            name.value = cleaned;
+            clipNames[index] = cleaned;
+          }
+        });
+
+        const timestamp = document.createElement('span');
+        timestamp.className = 'clip-time';
+        const start = plan.startSeconds + index * plan.segmentValue;
+        const end = Math.min(start + plan.segmentValue, videoDuration);
+        timestamp.textContent = `${formatTime(start)}–${formatTime(end)}`;
+
+        const clipStatus = document.createElement('span');
+        clipStatus.className = 'clip-status';
+        clipStatus.dataset.clip = String(index + 1);
+        clipStatus.textContent = 'Waiting';
+
+        item.append(name, timestamp, clipStatus);
+        clipList.append(item);
+      }
+
+      overviewCount.textContent = `${plan.count} ${plan.count === 1 ? 'clip' : 'clips'} · ${plan.resolutionValue}p`;
+      clipOverview.classList.add('visible');
+      message.classList.remove('error');
+      message.textContent = `${selectedFile.name} · ${(selectedFile.size / 1048576).toFixed(1)} MB`;
+      exportButton.disabled = false;
+    }
+
+    function renderCompletedClips(clips) {
+      clipList.replaceChildren();
+      clips.forEach((clip, index) => {
+        const item = document.createElement('li');
+        item.className = 'clip-row';
+
+        const name = document.createElement('span');
+        name.className = 'clip-name';
+        name.textContent = clip.name;
+
+        const timestamp = document.createElement('span');
+        timestamp.className = 'clip-time';
+        const plan = getPlan();
+        const clipStart = plan.error ? 0 : plan.startSeconds + index * plan.segmentValue;
+        const clipEnd = plan.error ? 0 : Math.min(clipStart + plan.segmentValue, videoDuration);
+        timestamp.textContent = `${formatTime(clipStart)}–${formatTime(clipEnd)}`;
+
+        const viewButton = document.createElement('button');
+        viewButton.className = 'clip-view-button';
+        viewButton.type = 'button';
+        viewButton.textContent = 'View';
+        viewButton.setAttribute('aria-expanded', 'false');
+        viewButton.addEventListener('click', () => {
+          const existingPlayer = item.querySelector('.clip-player');
+          if (existingPlayer) {
+            existingPlayer.pause();
+            existingPlayer.remove();
+            viewButton.textContent = 'View';
+            viewButton.setAttribute('aria-expanded', 'false');
+            return;
+          }
+          clipList.querySelectorAll('.clip-player').forEach(player => {
+            player.pause();
+            const previousButton = player.closest('.clip-row')?.querySelector('.clip-view-button');
+            if (previousButton) {
+              previousButton.setAttribute('aria-expanded', 'false');
+              previousButton.textContent = 'View';
+            }
+            player.remove();
+          });
+          const player = document.createElement('video');
+          player.className = 'clip-player';
+          player.controls = true;
+          player.playsInline = true;
+          player.preload = 'metadata';
+          player.src = clip.url;
+          item.append(player);
+          viewButton.textContent = 'Close';
+          viewButton.setAttribute('aria-expanded', 'true');
+        });
+
+        item.append(name, timestamp, viewButton);
+        clipList.append(item);
+      });
+    }
+
+    function updateClipStatuses(completedClips = 0, currentClip = null, allReady = false) {
+      clipList.querySelectorAll('.clip-status').forEach(element => {
+        const clipNumber = Number(element.dataset.clip);
+        element.className = 'clip-status';
+        if (allReady || clipNumber <= completedClips) {
+          element.textContent = 'Ready';
+          element.classList.add('ready');
+        } else if (clipNumber === currentClip) {
+          element.textContent = 'Exporting';
+          element.classList.add('exporting');
+        } else {
+          element.textContent = 'Waiting';
+        }
+      });
+    }
+
+    function setProgress(value, label) {
+      const safeValue = Math.max(0, Math.min(100, Math.round(value)));
+      progress.value = safeValue;
+      progress.textContent = `${safeValue}%`;
+      statusPercent.textContent = `${safeValue}%`;
+      statusLabel.textContent = label;
+      status.classList.add('visible');
+    }
+
+    function showError(text) {
+      message.textContent = text;
+      message.classList.add('error');
+      exportButton.disabled = false;
+      clipList.querySelectorAll('.clip-name-input').forEach(control => {
+        control.disabled = false;
+      });
+    }
+
+    input.addEventListener('change', () => {
+      selectedFile = input.files?.[0] ?? null;
+      if (!selectedFile) return;
+
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      objectUrl = URL.createObjectURL(selectedFile);
+      preview.src = objectUrl;
+      videoDuration = 0;
+      clipNames = [];
+      clipNameEdited = [];
+      masterName.value = selectedFile.name.replace(/\.[^.]+$/, '');
+      previewShell.classList.add('visible');
+      result.classList.remove('visible');
+      status.classList.remove('visible');
+      message.classList.remove('error');
+      message.textContent = 'Reading video details…';
+      exportButton.disabled = true;
+    });
+
+    preview.addEventListener('loadedmetadata', () => {
+      videoDuration = Number.isFinite(preview.duration) ? preview.duration : 0;
+      renderOverview();
+    });
+
+    crop.addEventListener('input', () => {
+      cropValue.value = `${crop.value}%`;
+      preview.style.objectPosition = `${crop.value}% center`;
+      saveSettings();
+    });
+
+    [startTime, segment, clipLimit].forEach(control => control.addEventListener('input', () => {
+      saveSettings();
+      renderOverview();
+    }));
+    resolution.addEventListener('change', () => {
+      saveSettings();
+      renderOverview();
+    });
+    masterName.addEventListener('input', renderOverview);
+
+    exportButton.addEventListener('click', () => {
+      if (!selectedFile) return showError('Choose a video first.');
+      const plan = getPlan();
+      if (plan.error) return showError(plan.error);
+      const plannedNames = currentClipNames();
+      if (plannedNames.error) return showError(plannedNames.error);
+
+      clipList.querySelectorAll('.clip-name-input').forEach(control => {
+        control.disabled = true;
+      });
+
+      exportButton.disabled = true;
+      updateClipStatuses();
+      result.classList.remove('visible');
+      message.classList.remove('error');
+      message.textContent = 'Keep this page open while the video is processed.';
+      setProgress(0, 'Uploading to the local processor…');
+
+      const metadata = {
+        filename: selectedFile.name,
+        name: safeMasterName(),
+        segment: plan.segmentValue,
+        crop: crop.value,
+        limit: plan.clipLimitValue === null ? '' : plan.clipLimitValue,
+        start: plan.startSeconds,
+        resolution: plan.resolutionValue,
+        clipNames: plannedNames.names
+      };
+      const metadataBytes = new TextEncoder().encode(JSON.stringify(metadata));
+      const uploadBody = new Blob([metadataBytes, selectedFile], { type: 'application/octet-stream' });
+
+      const request = new XMLHttpRequest();
+      request.open('POST', '/api/jobs');
+      request.setRequestHeader('Content-Type', 'application/octet-stream');
+      request.setRequestHeader('X-Split-Metadata-Length', String(metadataBytes.byteLength));
+      request.upload.onprogress = event => {
+        if (event.lengthComputable) {
+          const uploadProgress = (event.loaded / event.total) * 100;
+          const uploadMessage = uploadProgress < 20
+            ? 'Reading your video…'
+            : uploadProgress < 85
+              ? 'Sending video to the local processor…'
+              : 'Almost ready to start exporting…';
+          setProgress(uploadProgress, uploadMessage);
+        }
+      };
+      request.onerror = () => showError('The local server could not receive the video.');
+      request.onload = () => {
+        if (request.status !== 202) return showError(request.responseText || 'Processing could not start.');
+        const job = JSON.parse(request.responseText);
+        setProgress(0, 'Preparing the full-screen 9:16 crop…');
+        pollJob(job.jobId);
+      };
+      request.send(uploadBody);
+    });
+
+    async function pollJob(jobId) {
+      clearTimeout(pollTimer);
+      try {
+        const response = await fetch(`/api/jobs/${jobId}`);
+        if (!response.ok) throw new Error('Job status unavailable.');
+        const job = await response.json();
+
+        if (job.status === 'failed') return showError(job.error || 'FFmpeg could not process this video.');
+        if (job.status === 'complete') {
+          setProgress(100, 'All clips are ready');
+          renderCompletedClips(job.clips || []);
+          exportButton.disabled = false;
+          resultSummary.textContent = `${job.clipCount} clips exported successfully.`;
+          outputFolder.textContent = job.outputFolder;
+          downloadLink.href = `/api/jobs/${jobId}/download`;
+          result.classList.add('visible');
+          message.textContent = `Your clips are ready to view. The ZIP extracts into ${job.archiveFolder || 'one tidy folder'}.`;
+          return;
+        }
+
+        updateClipStatuses(job.completedClips || 0, job.currentClip || null);
+        const processingMessage = job.status === 'zipping'
+          ? 'Packaging all clips for batch download…'
+          : job.currentClip
+            ? `Cropping and exporting clip ${job.currentClip} of ${job.expectedClips || expectedClipCount}…`
+            : 'Preparing the full-screen 9:16 crop…';
+        setProgress(job.progress || 0, processingMessage);
+        pollTimer = setTimeout(() => pollJob(jobId), 750);
+      } catch (error) {
+        showError(error.message);
+      }
+    }
+
+    anotherButton.addEventListener('click', () => {
+      result.classList.remove('visible');
+      status.classList.remove('visible');
+      input.value = '';
+      selectedFile = null;
+      videoDuration = 0;
+      expectedClipCount = 0;
+      clipNames = [];
+      clipNameEdited = [];
+      masterName.value = '';
+      clipList.replaceChildren();
+      clipOverview.classList.remove('visible');
+      preview.removeAttribute('src');
+      preview.load();
+      previewShell.classList.remove('visible');
+      exportButton.disabled = true;
+      message.textContent = 'Choose a video to begin.';
+    });
+
+    loadSettings();
+  </script>
+</body>
+</html>
